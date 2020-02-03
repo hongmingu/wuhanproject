@@ -18,12 +18,14 @@ class DateFlag(models.Model):
         return "%s" % self.when
 
 
-class CountryInfo(models.Model):
+class CountryItem(models.Model):
     date_flag = models.ForeignKey(DateFlag, on_delete=models.DO_NOTHING, null=True, blank=True)
 
-    name = models.CharField(default="country_info", blank=None, null=True, max_length=255)
+    country = models.CharField(default="country", blank=None, null=True, max_length=255)
+    confirmed = models.CharField(default="confirmed", blank=None, null=True, max_length=255)
+    death = models.CharField(default="death", blank=None, null=True, max_length=255)
+    recovered = models.CharField(default="recovered", blank=None, null=True, max_length=255)
 
-    infected = models.IntegerField(default=0)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
@@ -31,7 +33,7 @@ class CountryInfo(models.Model):
         return "%s // %s // %s" % (self.date_flag.when, self.name, self.infected)
 
     class Meta:
-        unique_together = ('date_flag', 'name',)
+        unique_together = ('date_flag', 'country',)
 
 
 class CountryTranslation(models.Model):
@@ -49,11 +51,23 @@ id_length = 15
 
 
 class YoutubeVideo(models.Model):
-    video_id = models.CharField(max_length=id_length)
-    url = models.CharField(max_length=50 + id_length)
-    title = models.CharField(max_length=120)
-    channel_title = models.CharField(max_length=100)
+    video_id = models.CharField(max_length=id_length, unique=True,default=None, blank=True, null=True)
+    url = models.CharField(max_length=50 + id_length, default=None, blank=True, null=True)
+    title = models.CharField(max_length=120, default=None, blank=True, null=True)
+    channel_title = models.CharField(max_length=100, default=None, blank=True, null=True)
     description = models.TextField(max_length=5000, default=None, blank=True, null=True)
-    published_date = models.DateTimeField()
-    view_count = models.CharField(max_length=id_length)
+    published_date = models.CharField(max_length=100, default=None, blank=True, null=True)
+    view_count = models.CharField(max_length=id_length, default=None, blank=True, null=True)
     thumbnail = models.CharField(null=True, blank=True, default=None, max_length=255)  # 썸네일
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+
+class CnnItem(models.Model):
+    title = models.CharField(max_length=255, default=None, blank=True, null=True)
+    published_date = models.CharField(max_length=100, default=None, blank=True, null=True)
+    content = models.TextField(max_length=5000, default=None, blank=True, null=True)
+    url = models.CharField(max_length=255, unique=True, default=None, blank=True, null=True)
+
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)

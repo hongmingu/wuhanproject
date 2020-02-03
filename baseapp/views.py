@@ -1,7 +1,9 @@
+import feedparser
 from bs4 import BeautifulSoup
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, reverse
 from django.db.models import Q
-from django.db import transaction
+from django.db import transaction, IntegrityError
 import uuid
 
 from django.utils.timezone import now, timedelta
@@ -11,12 +13,11 @@ from baseapp.models import *
 
 from django.urls import reverse
 from django.shortcuts import render
-from paypal.standard.forms import PayPalPaymentsForm
 
 from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 import requests
-#from isodata import parse_duration
+# from isodata import parse_duration
 from django.conf import settings
 
 import pandas as pd
@@ -27,6 +28,9 @@ import ast
 import json
 from pyvirtualdisplay import Display
 import os
+
+from rss.models import Cnn
+
 
 def home(request):
     if request.method == "GET":
@@ -68,11 +72,108 @@ def home(request):
         return render(request, 'baseapp/home.html', {'day': 'day'})
 
 
-YOUTUBE_DATA_API_KEY = 'AIzaSyDAOuwrMiVMDaRxcKBGATckFTjrYlgHSGA' # youtube api key. 민구야 발급 받는 게 좋을 듯?
+YOUTUBE_DATA_API_KEY = 'AIzaSyDAOuwrMiVMDaRxcKBGATckFTjrYlgHSGA'  # youtube api key. 민구야 발급 받는 게 좋을 듯?
 
 
+def update_cnn(request):
+    if request.method == "POST":
+
+        payload = json.loads(
+            request.body.decode('utf-8'))
+
+        token = payload["token"]
+        if not token == settings.OXIBUG_TOKEN:
+            return JsonResponse({"data": "failed"}, safe=False)
+
+        url = "http://feeds.bbci.co.uk/news/rss.xml"  # Getting URL
+        feed = feedparser.parse(url)  # Parsing XML data
+        try:
+            with transaction.atomic():
+
+                for item in feed["entries"]:
+                    if 'Corona' in str(item["title"]):
+                        try:
+
+                            a = str(item["description"])[:str(item["description"]).find("<img src=")]
+                            cnn_item = CnnItem.objects.create(title=item["title"],
+                                                              published_date=item["published"],
+                                                              content=a,
+                                                              url=item['link'])
+                        except IntegrityError as e:
+                            print(e)
+                            pass
+        except Exception as e:
+            print(e)
+            return JsonResponse({"data": "failed"}, safe=False)
+
+        return JsonResponse({"data": "success"}, safe=False)
+
+
+
+@csrf_exempt
+def update_country(request):
+    if request.method == "POST":
+        # print("data: "+str(request.POST.form))
+        # get_data = request.POST.get("oxibug1905", None)
+        # print(get_data)
+
+        # type(get_data)
+        # print(request.POST.get("haha", None))
+        # print(request.POST)
+        # print(request.POST.dict())
+        # print(str(request.POST.dict()))
+
+        payload = json.loads(
+            request.body.decode('utf-8'))
+        # print(str(payload) + "gogo")
+        token = payload["token"]
+        if not token == settings.OXIBUG_TOKEN:
+            return JsonResponse({"data": "failed"}, safe=False)
+
+        import pandas as pd
+        data = pd.DataFrame(payload)
+
+        country = data['Country/Region'].to_list()  # 열 이름: Country/Region
+        confirmed = data['Confirmed Cases'].to_list()  # 열 이름: Confirmed Cases
+        deaths = data['Deaths'].to_list()  # 열 이름: Deaths
+        recovered = data['Recovered'].to_list()  # 열 이름: Recovered
+
+        try:
+            with transaction.atomic():
+
+                date_flag_create = DateFlag.objects.create()
+                for item in range(len(country)):
+                    country_item_create = CountryItem.objects.create(date_flag=date_flag_create,
+                                                                     country=country[item],
+                                                                     confirmed=confirmed[item],
+                                                                     death=deaths[item],
+                                                                     recovered=recovered[item])
+                return JsonResponse({"data": "success"}, safe=False)
+        except Exception as e:
+            print(e)
+            return JsonResponse({"data": "failed"}, safe=False)
+
+
+@csrf_exempt
 def update_youtube(request):
-    if request.method == "GET":
+    if request.method == "POST":
+        # print("data: "+str(request.POST.form))
+        # get_data = request.POST.get("oxibug1905", None)
+        # print(get_data)
+
+        # type(get_data)
+        # print(request.POST.get("haha", None))
+        # print(request.POST)
+        # print(request.POST.dict())
+        # print(str(request.POST.dict()))
+
+        payload = json.loads(
+            request.body.decode('utf-8'))
+        # print(str(payload) + "gogo")
+        token = payload["token"]
+        if not token == settings.OXIBUG_TOKEN:
+            return JsonResponse({"data": "failed"}, safe=False)
+
         search_url = 'https://www.googleapis.com/youtube/v3/search'
         video_url = 'https://www.googleapis.com/youtube/v3/videos'
 
@@ -104,37 +205,36 @@ def update_youtube(request):
         results = r.json()['items']
 
         videos = []
-        for result in results:
-            video_data = {
-                'id': result['id'],
-                'url': f'https://www.youtube.com/watch?v={ result["id"] }',
-                # 'duration' : int(parse_duration(result['contentDetails']['duration']).total_seconds() // 60)
-                'title': result['snippet']['title'],  # 제목
-                'channel_title': result['snippet']['channelTitle'],
-            # 채널 명 https://developers.google.com/youtube/v3/docs/videos
-                'description': result['snippet']['description'],
-            # 내용 설명 https://developers.google.com/youtube/v3/docs/videos
-                'published_date': result['snippet']['publishedAt'],
-            # 공개 날짜 https://developers.google.com/youtube/v3/docs/videos
-                'viewcount': result['statistics']['viewCount'],
-            # 조회수 https://developers.google.com/youtube/v3/docs/videos
-                'thumbnail': result['snippet']['thumbnails']['high']['url']  # 썸네일
-                ####################################################################### 언어 설정을 무조건 영어로 할지 어떨지 결정해야 한다.
-            }
-
-
 
         context = {
             'videos': videos
         }
+        try:
+            with transaction.atomic():
 
-        return render(request, 'baseapp/home.html')
+                for result in results:
+                    try:
 
+                        youtube_video_create = YoutubeVideo.objects.create(video_id=result['id'],
+                                                                           url=f'https://www.youtube.com/watch?v={ result["id"] }',
+                                                                           title=result['snippet']['title'],
+                                                                           channel_title=result['snippet'][
+                                                                               'channelTitle'],
+                                                                           description=result['snippet']['description'],
+                                                                           published_date=result['snippet'][
+                                                                               'publishedAt'],
+                                                                           view_count=result['statistics']['viewCount'],
+                                                                           thumbnail=
+                                                                           result['snippet']['thumbnails']['high'][
+                                                                               'url'])
+                    except IntegrityError as e:
+                        print(e)
+                        pass
+                return JsonResponse({"data": "success"}, safe=False)
+        except Exception as e:
+            print(e)
+            return JsonResponse({"data": "failed"}, safe=False)
 
-def test_linux(request):
-    if request.method == "GET":
-        print("heheh")
-        return render(request, 'baseapp/home.html')
 
 def crawl_on_linux(request):
     if request.method == "GET":
@@ -147,7 +247,7 @@ def crawl_on_linux(request):
         with open('language_dict.txt', 'r', encoding='utf-8') as f:  # language_dict.txt에 저장된 {언어: {중국어: 영어}} 불러오기.
             language_dict = json.loads(f.read())
 
-        #while True:
+        # while True:
         #    time.sleep(60 * 30)  # 30분 쉰다
         '''
         중국 자료를 크롤링

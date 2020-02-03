@@ -26,7 +26,7 @@ SECRET_KEY = 'i889$9#dz1u2a65*bswik%k1#jxq-qy!onqm$0#jl9oq!bdr*k'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
+OXIBUG_TOKEN = ""
 
 # Application definition
 
