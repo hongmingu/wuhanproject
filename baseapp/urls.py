@@ -12,10 +12,10 @@ urlpatterns = [
     path('a/sitemap.xml', sitemap_views.index, {'sitemaps': sitemaps, 'sitemap_url_name': 'baseapp:sitemaps'}),
     path('a/sitemap-<section>.xml', sitemap_views.sitemap, {'sitemaps': sitemaps},
             name='sitemaps'),
-
     re_path(r'^$', views.home, name='home'),
-    re_path(r'^test_linux/$', views.test_linux, name="test_linux"),
-
+    re_path(r'^update_youtube/$', views.update_youtube, name="update_youtube"),
+    re_path(r'^update_cnn/$', views.update_cnn, name="update_cnn"),
+    re_path(r'^update_country/$', views.update_country, name="update_country"),
 ]
 
 

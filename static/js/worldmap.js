@@ -39,8 +39,8 @@ $(function () {
     polygonSeries.heatRules.push({
         property: "fill",
         target: polygonSeries.mapPolygons.template,
-        min: am4core.color("#30bfea"),
-        max: am4core.color("#71ff42")
+        min: am4core.color("#eaa459"),
+        max: am4core.color("#ff2a2f")
     });
 
 
@@ -60,141 +60,18 @@ $(function () {
 
 
 // Add some data
-    polygonSeries.data = [{
-        "id": "US",
-        "name": "United States",
-        "value": 200,
-
-    }, {
-        "id": "FR",
-        "name": "France",
-        "value": 11000,
-
-    }, {
-        "id": "CN",
-        "name": "China",
-        "value": 11791,
-
-    }, {
-        "id": "TH",
-        "name": "Thailand",
-        "value": 19,
-
-    }
-        , {
-            "id": "MY",
-            "name": "Malaysia",
-            "value": 16,
-
-        }
-        , {
-            "id": "JP",
-            "name": "Jpan",
-            "value": 15,
-
-        }
-        , {
-            "id": "HK",
-            "name": "Hongkong",
-            "value": 13,
-
-        }
-        , {
-            "id": "KR",
-            "name": "Korea",
-            "value": 12,
-
-        }
-        , {
-            "id": "TW",
-            "name": "Republic of China",
-            "value": 10,
-
-        }, {
-            "id": "AU",
-            "name": "Austraila",
-            "value": 9,
-
-        }, {
-            "id": "MO",
-            "name": "Makao",
-            "value": 7,
-
-        }, {
-            "id": "DE",
-            "name": "Germany",
-            "value": 5,
-
-        }, {
-            "id": "VN",
-            "name": "Vietnam",
-            "value": 5,
-
-        }, {
-            "id": "AE",
-            "name": "Arabemirates",
-            "value": 10,
-
-        }, {
-            "id": "CA",
-            "name": "Canada",
-            "value": 3,
-
-        }, {
-            "id": "NP",
-            "name": "Nepal",
-            "value": 2,
-
-        }, {
-            "id": "GB",
-            "name": "England",
-            "value": 2,
-
-        }, {
-            "id": "IT",
-            "name": "Italia",
-            "value": 2,
-
-        }, {
-            "id": "RU",
-            "name": "Russia",
-            "value": 2,
-
-        }, {
-            "id": "KH",
-            "name": "Cambodia",
-            "value": 1,
-
-        }, {
-            "id": "LK",
-            "name": "Srilanka",
-            "value": 1,
-
-        }, {
-            "id": "FI",
-            "name": "Finland",
-            "value": 1,
-
-        }, {
-            "id": "PH",
-            "name": "Philippines",
-            "value": 1,
-
-        }, {
-            "id": "IN",
-            "name": "Republic of India",
-            "value": 1,
-
-        }, {
-            "id": "SE",
-            "name": "Sweden",
-            "value": 1,
-
-        }, {
-            "id": "ES",
-            "name": "Spain",
-            "value": 1,
-
-        }];
+    var polygonArray = [];
+    $(".country").each(function (i, obj) {
+        var value_int = $(obj).find(".case").html()
+        var item = {
+            "id": $(obj).find(".code").html(),
+            "name": $(obj).find(".name").html(),
+            "value": parseInt(value_int)
+        };
+        console.log(item);
+        polygonArray.push(item);
+    });
+    console.log(polygonArray);
+    polygonSeries.data = polygonArray;
 
 })
