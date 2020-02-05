@@ -118,16 +118,16 @@ def update_cnn(request):
 
                 for item in feed["entries"]:
                     if 'Corona' in str(item["title"]):
-                        try:
 
-                            a = str(item["description"])[:str(item["description"]).find("<img src=")]
-                            cnn_item = CnnItem.objects.create(title=item["title"],
-                                                              published_date=item["published"],
-                                                              content=a,
-                                                              url=item['link'])
-                        except IntegrityError as e:
-                            print(e)
-                            pass
+                        a = str(item["description"])[:str(item["description"]).find("<img src=")]
+                        cnn_item_created, created = CnnItem.objects.get_or_create(url=item['link'])
+                        if created:
+                            cnn_item_created.title = item["title"]
+                            cnn_item_created.published_date = item["published"]
+                            cnn_item_created.content = a
+                            cnn_item_created.url = item['link']
+                            cnn_item_created.save()
+
         except Exception as e:
             print(e)
             return JsonResponse({"data": "failed"}, safe=False)
@@ -237,12 +237,17 @@ def update_youtube(request):
             'q': 'corona',  # 검색어: corona
             'key': settings.YOUTUBE_DATA_API_KEY,
             'maxResults': 5,  # 불러올 비디오 갯수: 5개
-            'type': 'video'
+            'type': 'video',
+            'relevanceLanguage': 'en',
+            'location': "51.509865,-0.118092",
+            'locationRadius': '1000km',
+            'regionCode': 'GB'
         }
-
         video_ids = []
 
         r = requests.get(search_url, params=search_params)
+
+        print(r.json())
 
         results = r.json()['items']
 
@@ -269,24 +274,31 @@ def update_youtube(request):
 
                 for result in results:
                     print("result" + str(result))
-                    try:
+                    youtube_item_created, created = YoutubeItem.objects.get_or_create(video_id=result['id'])
+                    if created:
+                        # youtube_item_created.update(video_id=result['id'],
+                        #                             url=f'https://www.youtube.com/watch?v={ result["id"] }',
+                        #                             title=result['snippet']['title'],
+                        #                             channel_title=result['snippet'][
+                        #                                 'channelTitle'],
+                        #                             description=result['snippet']['description'],
+                        #                             published_date=result['snippet'][
+                        #                                 'publishedAt'],
+                        #                             published_date_raw=result['snippet'][
+                        #                                 'publishedAt'],
+                        #                             thumbnail=
+                        #                             result['snippet']['thumbnails']['high'][
+                        #                                 'url'])
 
-                        youtube_item_created = YoutubeItem.objects.create(video_id=result['id'],
-                                                                          url=f'https://www.youtube.com/watch?v={ result["id"] }',
-                                                                          title=result['snippet']['title'],
-                                                                          channel_title=result['snippet'][
-                                                                              'channelTitle'],
-                                                                          description=result['snippet']['description'],
-                                                                          published_date=result['snippet'][
-                                                                              'publishedAt'],
-                                                                          published_date_raw=result['snippet'][
-                                                                              'publishedAt'],
-                                                                          thumbnail=
-                                                                          result['snippet']['thumbnails']['high'][
-                                                                              'url'])
-                    except IntegrityError as e:
-                        print(e)
-                        pass
+                        youtube_item_created.url = f'https://www.youtube.com/watch?v={ result["id"] }'
+                        youtube_item_created.title = result['snippet']['title']
+                        youtube_item_created.channel_title = result['snippet']['channelTitle']
+                        youtube_item_created.description = result['snippet']['description']
+                        youtube_item_created.published_date = result['snippet']['publishedAt']
+                        youtube_item_created.published_date_raw = result['snippet']['publishedAt']
+                        youtube_item_created.thumbnail = result['snippet']['thumbnails']['high']['url']
+                        youtube_item_created.save()
+
                 return JsonResponse({"data": "success"}, safe=False)
         except Exception as e:
             print(e)
@@ -296,107 +308,6 @@ def update_youtube(request):
         return render(request, 'baseapp/home.html')
 
 
-#
-# [{'kind': 'youtube#video', 'etag': '"Fznwjl6JEQdo1MGvHOGaz_YanRU/WE5mwVTiBEhtJxuzVu5Vy4vrZ24"', 'id': 'MLkzh_fhrnI',
-#   'snippet': {'publishedAt': '2020-02-04T08:02:21.000Z', 'channelId': 'UC7723FqVehXq2zeRb3tP0hQ',
-#               'title': 'Tin tức dịch corona mới nhất ngày hôm nay 4/2/2020 | Tin tức tổng hợp',
-#               'description': 'FBNC TV - Tin tức dịch corona mới nhất ngày hôm nay 4/2/2020\n\nTheo Bộ Y tế, đến 11h ngày hôm nay (4/2), thế giới có 20.628 ca nhiễm virus corona, 427 người tử vong. Việt Nam có 360 trường hợp nghi ngờ nhiễm và 9 trường hợp đã được xách định nhiễm nCoV, trong đó có 2 trường hợp đã điều trị khỏi và được ra viện.\n\nNgoài ra, Việt Nam vừa tiếp nhận được mồi đặc hiệu chuẩn thức của Tổ chức Y tế Thế giới (WHO) để xét nghiệm virus corona. Nếu như trước đây phải mất tới 3-4 ngày mới có kết quả thì nay với kỹ thuật mới này, từ 1-2 ngày đã có thể cho kết quả. \n\nĐể sẵn sàng các phương án phòng chống và điều trị, TP.HCM cũng đang gấp rút triển khai 2 bệnh viện dã chiến quy mô 500 giường bệnh đặt tại huyện Củ Chi và Nhà Bè. Dự kiến hoàn thành vào ngày 15/2. \n\nBên cạnh đó, Thủ tướng và Bộ Công thương vừa đưa ra các chỉ thị về việc cách ly tuyệt đối trường hợp nghi nhiễm nCoV, dừng nhận lao động từ vùng dịch về Việt Nam.\n\nĐồng thời, Bộ VHTT&DL cũng chỉ thị dừng tất cả các lễ hội kể cả lễ hội đã khai mạc tại các tỉnh đã công bố dịch.\n--------------------\nFBNC (Financial Business News Channel) là kênh truyền hình của HTVC  dành cho giới kinh doanh, thông tin chuyên sâu về  kinh tế Việt Nam, bất động sản,  tài chính ngân hàng,  chứng khoán và cổ phiếu, giá vàng và khởi nghiệp,… Nếu bạn đã, đang và sẽ định giá doanh nghiệp. Hãy đồng hành cùng FBNC TV!\n\nKênh truyền thông FBNC:\nFanpage https://www.facebook.com/KinhTeTaiChi...\nZalo https://zalo.me/fbncvn\nYoutube http://www.youtube.com/FBNCVietnam\nWebsite fbnc.vn\nFBNC Live\nhttp://popsww.com/FBNC\n---------------\nFBNC\nĐỒNG TIỀN THÔNG MINH - CUỘC SỐNG THÔNG MINH\n#FBNCTV  #viruscorona #tintuctonghop',
-#               'thumbnails': {
-#                   'default': {'url': 'https://i.ytimg.com/vi/MLkzh_fhrnI/default.jpg', 'width': 120, 'height': 90},
-#                   'medium': {'url': 'https://i.ytimg.com/vi/MLkzh_fhrnI/mqdefault.jpg', 'width': 320, 'height': 180},
-#                   'high': {'url': 'https://i.ytimg.com/vi/MLkzh_fhrnI/hqdefault.jpg', 'width': 480, 'height': 360},
-#                   'standard': {'url': 'https://i.ytimg.com/vi/MLkzh_fhrnI/sddefault.jpg', 'width': 640, 'height': 480},
-#                   'maxres': {'url': 'https://i.ytimg.com/vi/MLkzh_fhrnI/maxresdefault.jpg', 'width': 1280,
-#                              'height': 720}}, 'channelTitle': 'FBNC Vietnam',
-#               'tags': ['fbnc vietnam', 'tin hot', 'tin nong', 'fbnc tv', 'coronavirus', 'corona',
-#                        'diễn biến dịch corona ở Việt Nam', 'dịch virus corona',
-#                        'Tin tức dịch corona mới nhất ngày hôm nay 4/2/2020', 'tin tức tổng hợp ngày 4/2/2020',
-#                        'tin tức ngày 4/2/2020', 'thoi su 24h', 'virus corona', 'corona vũ hán', 'corona việt nam',
-#                        'phòng chống corona', 'người việt nhiễm corona', 'số người chết corona',
-#                        'virus corona tại việt nam', 'dịch bệnh corona', 'dịch corona',
-#                        'cập nhật tình hình virus corona', 'dịch corona ở việt nam'], 'categoryId': '25',
-#               'liveBroadcastContent': 'none',
-#               'localized': {'title': 'Tin tức dịch corona mới nhất ngày hôm nay 4/2/2020 | Tin tức tổng hợp',
-#                             'description': 'FBNC TV - Tin tức dịch corona mới nhất ngày hôm nay 4/2/2020\n\nTheo Bộ Y tế, đến 11h ngày hôm nay (4/2), thế giới có 20.628 ca nhiễm virus corona, 427 người tử vong. Việt Nam có 360 trường hợp nghi ngờ nhiễm và 9 trường hợp đã được xách định nhiễm nCoV, trong đó có 2 trường hợp đã điều trị khỏi và được ra viện.\n\nNgoài ra, Việt Nam vừa tiếp nhận được mồi đặc hiệu chuẩn thức của Tổ chức Y tế Thế giới (WHO) để xét nghiệm virus corona. Nếu như trước đây phải mất tới 3-4 ngày mới có kết quả thì nay với kỹ thuật mới này, từ 1-2 ngày đã có thể cho kết quả. \n\nĐể sẵn sàng các phương án phòng chống và điều trị, TP.HCM cũng đang gấp rút triển khai 2 bệnh viện dã chiến quy mô 500 giường bệnh đặt tại huyện Củ Chi và Nhà Bè. Dự kiến hoàn thành vào ngày 15/2. \n\nBên cạnh đó, Thủ tướng và Bộ Công thương vừa đưa ra các chỉ thị về việc cách ly tuyệt đối trường hợp nghi nhiễm nCoV, dừng nhận lao động từ vùng dịch về Việt Nam.\n\nĐồng thời, Bộ VHTT&DL cũng chỉ thị dừng tất cả các lễ hội kể cả lễ hội đã khai mạc tại các tỉnh đã công bố dịch.\n--------------------\nFBNC (Financial Business News Channel) là kênh truyền hình của HTVC  dành cho giới kinh doanh, thông tin chuyên sâu về  kinh tế Việt Nam, bất động sản,  tài chính ngân hàng,  chứng khoán và cổ phiếu, giá vàng và khởi nghiệp,… Nếu bạn đã, đang và sẽ định giá doanh nghiệp. Hãy đồng hành cùng FBNC TV!\n\nKênh truyền thông FBNC:\nFanpage https://www.facebook.com/KinhTeTaiChi...\nZalo https://zalo.me/fbncvn\nYoutube http://www.youtube.com/FBNCVietnam\nWebsite fbnc.vn\nFBNC Live\nhttp://popsww.com/FBNC\n---------------\nFBNC\nĐỒNG TIỀN THÔNG MINH - CUỘC SỐNG THÔNG MINH\n#FBNCTV  #viruscorona #tintuctonghop'},
-#               'defaultAudioLanguage': 'vi'},
-#   'contentDetails': {'duration': 'PT5M29S', 'dimension': '2d', 'definition': 'hd', 'caption': 'false',
-#                      'licensedContent': True, 'projection': 'rectangular'}},
-#  {'kind': 'youtube#video', 'etag': '"Fznwjl6JEQdo1MGvHOGaz_YanRU/nHBXl2fatxtf7VidDoCoc34UvcY"', 'id': 'In9oKF-OfmE',
-#   'snippet': {'publishedAt': '2020-02-03T22:15:34.000Z', 'channelId': 'UC5BMIWZe9isJXLZZWPWvBlg',
-#               'title': 'Ini Dia, Penampakan Rumah Sakit Khusus Virus Corona yang Dibangun Hanya Dalam 10 Hari',
-#               'description': 'WUHAN, KOMPAS.TV - Rumah sakit khusus penanganan virus corona akhirnya sudah selesai dibangun.\r\n\r\nPemerintah China menamainya RS. Huoshenshan yang bertugas untuk menangani virus corona.\r\n\r\nRumah sakit dibangun di atas lahan tanah seluas 33.900 meter persegi.\r\n\r\nRumah sakit ini terletak di Wuhan, China.\r\n\r\n7.000 pekerja bekerja untuk membangun rumah sakit ini selama 24 jam.\r\n\r\nRumah sakit ini dibangun pada tanggal 23 Januari 2020 dan tanggal 3 Februari, rumah sakit sudah siap untuk beroperasi.\r\n\r\nTotal keseluruhan waktu yang dihabiskan adalah 10 hari.\r\n\r\nMetode pembangunan yang sangat singkat ini di Indonesia terkenal sebagai proyek Roro Jonggrang.\r\n\r\n1.400 staf medis berasal dari tentara China dan mereka sudah siap ditugas di rumah sakit baru tersebut.\r\nRumah sakit ini juga memiliki 10.000 tempat tidur, sehingga diharapkan cukup untuk menampung dan mengatasi kasus-kasus yang diduga virus corona saat ini. \r\n\r\nDilansir dari Kompas.com melalui Global Times, rumah sakit ini mirip dengan kasus pembangunan RS. Xiaotangshan yang dibangun pada tahun 2003 lalu.\r\n\r\nRS tersebut dibangun sebagai pusat medis untuk pasien SARS.',
-#               'thumbnails': {
-#                   'default': {'url': 'https://i.ytimg.com/vi/In9oKF-OfmE/default.jpg', 'width': 120, 'height': 90},
-#                   'medium': {'url': 'https://i.ytimg.com/vi/In9oKF-OfmE/mqdefault.jpg', 'width': 320, 'height': 180},
-#                   'high': {'url': 'https://i.ytimg.com/vi/In9oKF-OfmE/hqdefault.jpg', 'width': 480, 'height': 360},
-#                   'standard': {'url': 'https://i.ytimg.com/vi/In9oKF-OfmE/sddefault.jpg', 'width': 640, 'height': 480},
-#                   'maxres': {'url': 'https://i.ytimg.com/vi/In9oKF-OfmE/maxresdefault.jpg', 'width': 1280,
-#                              'height': 720}}, 'channelTitle': 'KOMPASTV',
-#               'tags': ['virus corona', 'wuhan', 'china', 'rumah sakit khusus', 'cerita indonesia'], 'categoryId': '25',
-#               'liveBroadcastContent': 'none', 'localized': {
-#           'title': 'Ini Dia, Penampakan Rumah Sakit Khusus Virus Corona yang Dibangun Hanya Dalam 10 Hari',
-#           'description': 'WUHAN, KOMPAS.TV - Rumah sakit khusus penanganan virus corona akhirnya sudah selesai dibangun.\r\n\r\nPemerintah China menamainya RS. Huoshenshan yang bertugas untuk menangani virus corona.\r\n\r\nRumah sakit dibangun di atas lahan tanah seluas 33.900 meter persegi.\r\n\r\nRumah sakit ini terletak di Wuhan, China.\r\n\r\n7.000 pekerja bekerja untuk membangun rumah sakit ini selama 24 jam.\r\n\r\nRumah sakit ini dibangun pada tanggal 23 Januari 2020 dan tanggal 3 Februari, rumah sakit sudah siap untuk beroperasi.\r\n\r\nTotal keseluruhan waktu yang dihabiskan adalah 10 hari.\r\n\r\nMetode pembangunan yang sangat singkat ini di Indonesia terkenal sebagai proyek Roro Jonggrang.\r\n\r\n1.400 staf medis berasal dari tentara China dan mereka sudah siap ditugas di rumah sakit baru tersebut.\r\nRumah sakit ini juga memiliki 10.000 tempat tidur, sehingga diharapkan cukup untuk menampung dan mengatasi kasus-kasus yang diduga virus corona saat ini. \r\n\r\nDilansir dari Kompas.com melalui Global Times, rumah sakit ini mirip dengan kasus pembangunan RS. Xiaotangshan yang dibangun pada tahun 2003 lalu.\r\n\r\nRS tersebut dibangun sebagai pusat medis untuk pasien SARS.'}},
-#   'contentDetails': {'duration': 'PT1M', 'dimension': '2d', 'definition': 'hd', 'caption': 'false',
-#                      'licensedContent': True, 'projection': 'rectangular'}},
-#  {'kind': 'youtube#video', 'etag': '"Fznwjl6JEQdo1MGvHOGaz_YanRU/mEnL_XTV7f-gX1h-2_HMk7xPWpk"', 'id': 'mO4P2PB7wjA',
-#   'snippet': {'publishedAt': '2020-02-04T07:35:32.000Z', 'channelId': 'UCabsTV34JwALXKGMqHpvUiA',
-#               'title': 'Việt Nam rút ngắn thời gian xét nghiệm virus corona mới | VTV24',
-#               'description': 'Thay vì phải đợi tới 3 - 10 ngày, nhờ mồi đặc hiệu từ WHO, thời gian xét nghiệm virus corona tại Việt Nam rút ngắn xuống còn 24 -28 giờ.\n\n► Kênh Youtube Chính Thức của Trung tâm Tin tức VTV24 - Đài Truyền Hình Việt Nam\n►Subscribe kênh ngay: http://bit.ly/VTV24Subscribe\n►Đồng hành cùng VTV24 tại:\nFanpage chính thức      : fb.com/tintucvtv24\nChuyên trang Tài Chính: fb.com/vtv24money\nZalo                                  : zalo.me/1571891271885013375\nInstagram                       : instagram.com/vtv24news/\nYoutube Channel           : youtube.com/vtv24',
-#               'thumbnails': {
-#                   'default': {'url': 'https://i.ytimg.com/vi/mO4P2PB7wjA/default.jpg', 'width': 120, 'height': 90},
-#                   'medium': {'url': 'https://i.ytimg.com/vi/mO4P2PB7wjA/mqdefault.jpg', 'width': 320, 'height': 180},
-#                   'high': {'url': 'https://i.ytimg.com/vi/mO4P2PB7wjA/hqdefault.jpg', 'width': 480, 'height': 360},
-#                   'standard': {'url': 'https://i.ytimg.com/vi/mO4P2PB7wjA/sddefault.jpg', 'width': 640, 'height': 480},
-#                   'maxres': {'url': 'https://i.ytimg.com/vi/mO4P2PB7wjA/maxresdefault.jpg', 'width': 1280,
-#                              'height': 720}}, 'channelTitle': 'VTV24',
-#               'tags': ['chuyển động 24h', 'tin tức vtv24', 'thời sự vtv24', 'tin tức', 'VTV24', 'Tin tức mới nhất',
-#                        'tin tức trong ngày', 'tin tức VTV1', 'virus corona mới', 'nCoV', 'thời gian xét nghiệm',
-#                        'mồi đặc hiệu', 'WHO'], 'categoryId': '25', 'liveBroadcastContent': 'none',
-#               'localized': {'title': 'Việt Nam rút ngắn thời gian xét nghiệm virus corona mới | VTV24',
-#                             'description': 'Thay vì phải đợi tới 3 - 10 ngày, nhờ mồi đặc hiệu từ WHO, thời gian xét nghiệm virus corona tại Việt Nam rút ngắn xuống còn 24 -28 giờ.\n\n► Kênh Youtube Chính Thức của Trung tâm Tin tức VTV24 - Đài Truyền Hình Việt Nam\n►Subscribe kênh ngay: http://bit.ly/VTV24Subscribe\n►Đồng hành cùng VTV24 tại:\nFanpage chính thức      : fb.com/tintucvtv24\nChuyên trang Tài Chính: fb.com/vtv24money\nZalo                                  : zalo.me/1571891271885013375\nInstagram                       : instagram.com/vtv24news/\nYoutube Channel           : youtube.com/vtv24'},
-#               'defaultAudioLanguage': 'vi'},
-#   'contentDetails': {'duration': 'PT5M3S', 'dimension': '2d', 'definition': 'hd', 'caption': 'false',
-#                      'licensedContent': True, 'projection': 'rectangular'}},
-#  {'kind': 'youtube#video', 'etag': '"Fznwjl6JEQdo1MGvHOGaz_YanRU/qO7b1sRKPYCN3Nchr4qfozgk8QY"', 'id': 'p5zobT0A0Sk',
-#   'snippet': {'publishedAt': '2020-02-03T07:29:59.000Z', 'channelId': 'UCN7B-QD0Qgn2boVH5Q0pOWg',
-#               'title': 'China ने Corona Virus से लड़ने के लिए दस दिन में बनाया 1000 बेड का अस्पताल',
-#               'description': 'चीन का वुहान शहर कोरोना वायरस से जूझ रहा है और इससे लड़ने के लिए उसने दस दिनों में एक हज़ार बेड का अस्पताल बनाकर दिखा दिया है.\n\n#China #Wuhan #CoronaVirus\n\nऐसे ही और दिलचस्प वीडियो देखने के लिए चैनल सब्सक्राइब ज़रूर करें-\nhttps://www.youtube.com/channel/UCN7B-QD0Qgn2boVH5Q0pOWg?disable_polymer=true\n\nबीबीसी हिंदी से आप इन सोशल मीडिया चैनल्स पर भी जुड़ सकते हैं-\n\nफ़ेसबुक- https://www.facebook.com/BBCnewsHindi\nट्विटर- https://twitter.com/BBCHindi\nइंस्टाग्राम- https://www.instagram.com/bbchindi/\n\nबीबीसी हिंदी का एंड्रॉयड ऐप डाउनलोड करने के लिए क्लिक करें- https://play.google.com/store/apps/details?id=uk.co.bbc.hindi',
-#               'thumbnails': {
-#                   'default': {'url': 'https://i.ytimg.com/vi/p5zobT0A0Sk/default.jpg', 'width': 120, 'height': 90},
-#                   'medium': {'url': 'https://i.ytimg.com/vi/p5zobT0A0Sk/mqdefault.jpg', 'width': 320, 'height': 180},
-#                   'high': {'url': 'https://i.ytimg.com/vi/p5zobT0A0Sk/hqdefault.jpg', 'width': 480, 'height': 360},
-#                   'standard': {'url': 'https://i.ytimg.com/vi/p5zobT0A0Sk/sddefault.jpg', 'width': 640, 'height': 480}},
-#               'channelTitle': 'BBC News Hindi',
-#               'tags': ['BBC Hindi', 'hindi news', 'news in hindi', 'China', 'CHina Wuhan', 'CHina Hospital',
-#                        'Wuhan Hospital', 'Corona Virus', 'बीबीसी हिन्दी', 'हिन्दी समाचार', 'हिन्दी ख़बर', 'चीन',
-#                        'वुहान', 'चीनी शहर वुहान', 'कोरोना वायरस', 'वुहान अस्पताल', 'बीजिंग'], 'categoryId': '25',
-#               'liveBroadcastContent': 'none',
-#               'localized': {'title': 'China ने Corona Virus से लड़ने के लिए दस दिन में बनाया 1000 बेड का अस्पताल',
-#                             'description': 'चीन का वुहान शहर कोरोना वायरस से जूझ रहा है और इससे लड़ने के लिए उसने दस दिनों में एक हज़ार बेड का अस्पताल बनाकर दिखा दिया है.\n\n#China #Wuhan #CoronaVirus\n\nऐसे ही और दिलचस्प वीडियो देखने के लिए चैनल सब्सक्राइब ज़रूर करें-\nhttps://www.youtube.com/channel/UCN7B-QD0Qgn2boVH5Q0pOWg?disable_polymer=true\n\nबीबीसी हिंदी से आप इन सोशल मीडिया चैनल्स पर भी जुड़ सकते हैं-\n\nफ़ेसबुक- https://www.facebook.com/BBCnewsHindi\nट्विटर- https://twitter.com/BBCHindi\nइंस्टाग्राम- https://www.instagram.com/bbchindi/\n\nबीबीसी हिंदी का एंड्रॉयड ऐप डाउनलोड करने के लिए क्लिक करें- https://play.google.com/store/apps/details?id=uk.co.bbc.hindi'},
-#               'defaultAudioLanguage': 'hi'},
-#   'contentDetails': {'duration': 'PT1M23S', 'dimension': '2d', 'definition': 'hd', 'caption': 'false',
-#                      'licensedContent': True, 'projection': 'rectangular'}},
-#  {'kind': 'youtube#video', 'etag': '"Fznwjl6JEQdo1MGvHOGaz_YanRU/2M0nq1jwgrMCNiKUWt3bGHNCniY"', 'id': 'vX_Au3XeTz0',
-#   'snippet': {'publishedAt': '2020-02-04T08:44:03.000Z', 'channelId': 'UCIW9cGgoRuGJnky3K3tbzNg',
-#               'title': 'Bản tin về virus corona mới ngày 4.2.2020: Người Việt mắc viêm phổi Vũ Hán tiếp tục tăng',
-#               'description': '#thoisuthanhnien #tinnongthanhnien #phongsuthanhnien\nBản tin về virus Corona số ngày 4.2.2020 của Báo Thanh Niên phát vào lúc 19 giờ tại địa chỉ thanhnien.vn và kênh YouTube Báo Thanh Niên. Nội dung là những thông tin mới nhất, đầy đủ nhất về diễn biến của dịch bệnh viêm phổi Vũ Hán do chủng mới của virus Corona gây ra tại Việt Nam và cả trên thế giới.\n\n#viruscorona #bảntincorona #BảntinvirusCorona #BáoThanhNiên #viêmphổicorona #khẩutrang #thiếukhẩutrang #virútcorona #viêmphổiTrungQuốc #viêmphổiVũVán #VũHán #virusviêmphổi\n\n--------\nĐăng kí theo dõi kênh để xem những tin tức mới nhất: \n\nhttp://popsww.com/BaoThanhNien\n\nTin tức báo Thanh Niên - Đọc tin mới online - tin nhanh - tin 24h - thời sự\nKênh YouTube chính thức của Báo Thanh Niên. Đăng kí theo dõi kênh để xem những tin tức mới nhất: \n\nhttp://popsww.com/BaoThanhNien\n\nWebsite: http://thanhnien.vn/\nFanpage: https://www.facebook.com/thanhnien\n\nYoutube Channel: http://popsww.com/BaoThanhNien\n\n268 - 270 Nguyễn Đình Chiểu, Phường 6, Q.3, TP HCM \nĐT: (+84.8) 39302302 \nFax: (+84.8) 39309939 \nEmail: tnmedia@thanhnien.vn',
-#               'thumbnails': {
-#                   'default': {'url': 'https://i.ytimg.com/vi/vX_Au3XeTz0/default_live.jpg', 'width': 120, 'height': 90},
-#                   'medium': {'url': 'https://i.ytimg.com/vi/vX_Au3XeTz0/mqdefault_live.jpg', 'width': 320,
-#                              'height': 180},
-#                   'high': {'url': 'https://i.ytimg.com/vi/vX_Au3XeTz0/hqdefault_live.jpg', 'width': 480, 'height': 360},
-#                   'standard': {'url': 'https://i.ytimg.com/vi/vX_Au3XeTz0/sddefault_live.jpg', 'width': 640,
-#                                'height': 480},
-#                   'maxres': {'url': 'https://i.ytimg.com/vi/vX_Au3XeTz0/maxresdefault_live.jpg', 'width': 1280,
-#                              'height': 720}}, 'channelTitle': 'Báo Thanh Niên',
-#               'tags': ['virus corona', 'bản tin corona', 'Bản tin virus Corona', 'Báo Thanh Niên', 'viêm phổi corona',
-#                        'khẩu trang', 'thiếu khẩu trang', 'vi rút corona', 'viêm phổi Trung Quốc', 'viêm phổi Vũ Ván',
-#                        'Vũ Hán', 'virus viêm phổi'], 'categoryId': '25', 'liveBroadcastContent': 'live', 'localized': {
-#           'title': 'Bản tin về virus corona mới ngày 4.2.2020: Người Việt mắc viêm phổi Vũ Hán tiếp tục tăng',
-#           'description': '#thoisuthanhnien #tinnongthanhnien #phongsuthanhnien\nBản tin về virus Corona số ngày 4.2.2020 của Báo Thanh Niên phát vào lúc 19 giờ tại địa chỉ thanhnien.vn và kênh YouTube Báo Thanh Niên. Nội dung là những thông tin mới nhất, đầy đủ nhất về diễn biến của dịch bệnh viêm phổi Vũ Hán do chủng mới của virus Corona gây ra tại Việt Nam và cả trên thế giới.\n\n#viruscorona #bảntincorona #BảntinvirusCorona #BáoThanhNiên #viêmphổicorona #khẩutrang #thiếukhẩutrang #virútcorona #viêmphổiTrungQuốc #viêmphổiVũVán #VũHán #virusviêmphổi\n\n--------\nĐăng kí theo dõi kênh để xem những tin tức mới nhất: \n\nhttp://popsww.com/BaoThanhNien\n\nTin tức báo Thanh Niên - Đọc tin mới online - tin nhanh - tin 24h - thời sự\nKênh YouTube chính thức của Báo Thanh Niên. Đăng kí theo dõi kênh để xem những tin tức mới nhất: \n\nhttp://popsww.com/BaoThanhNien\n\nWebsite: http://thanhnien.vn/\nFanpage: https://www.facebook.com/thanhnien\n\nYoutube Channel: http://popsww.com/BaoThanhNien\n\n268 - 270 Nguyễn Đình Chiểu, Phường 6, Q.3, TP HCM \nĐT: (+84.8) 39302302 \nFax: (+84.8) 39309939 \nEmail: tnmedia@thanhnien.vn'}},
-#   'contentDetails': {'duration': 'PT0S', 'dimension': '2d', 'definition': 'sd', 'caption': 'false',
-#                      'licensedContent': True, 'projection': 'rectangular'}}]
-#
 
 def crawl_on_linux(request):
     if request.method == "GET":

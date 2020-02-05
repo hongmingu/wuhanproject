@@ -19,7 +19,7 @@ $(function () {
 
 // Configure series
     var polygonTemplate = polygonSeries.mapPolygons.template;
-    polygonTemplate.tooltipText = "{name} \n infected people:{value.value.formatNumber('#')}";
+    polygonTemplate.tooltipText = "{name} \n confirmed: {value.value.formatNumber('#')}";
     polygonTemplate.fillOpacity = 0.6;
 
 // Create hover state and set alternative fill color

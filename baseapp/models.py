@@ -82,9 +82,9 @@ class YoutubeItem(models.Model):
 
 class CnnItem(models.Model):
     title = models.CharField(max_length=255, default=None, blank=True, null=True)
-    published_date = models.CharField(max_length=100, default=None, blank=True, null=True)
     content = models.TextField(max_length=5000, default=None, blank=True, null=True)
     url = models.CharField(max_length=255, unique=True, default=None, blank=True, null=True)
+    published_date = models.CharField(max_length=100, default=None, blank=True, null=True)
     published_date_raw = models.DateTimeField(default=None, blank=True, null=True)
 
     updated = models.DateTimeField(auto_now=True)
