@@ -14,13 +14,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import path, re_path, include
 
 urlpatterns = [
     re_path(r'^', include('baseapp.urls')),
     # https://www.뭐뭐닷컴.com/payment/paypal 이걸 paypal의 ipn 설정에 입력하면 된다.
 ]
-
+urlpatterns += staticfiles_urlpatterns()
 from django.views.generic import TemplateView
 # 이 아래부분 미디어 파일 디벨롭모드에서 쓰기 위해 필요
 from django.conf import settings

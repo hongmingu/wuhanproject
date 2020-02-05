@@ -178,10 +178,11 @@ elif settings_json['debug']['mode'] == 'deploy':
         'django.contrib.staticfiles',
         'django.contrib.sites',
         'django.contrib.sitemaps',
-        'storages'
+        'storages',
         'baseapp',
     ]
 
+# feedparser
     SITE_ID = 1
 
     WSGI_APPLICATION = 'wuhanproject.wsgi.application'
