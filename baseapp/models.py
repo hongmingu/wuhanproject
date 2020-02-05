@@ -80,7 +80,7 @@ class YoutubeItem(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
 
-class CnnItem(models.Model):
+class BBCItem(models.Model):
     title = models.CharField(max_length=255, default=None, blank=True, null=True)
     content = models.TextField(max_length=5000, default=None, blank=True, null=True)
     url = models.CharField(max_length=255, unique=True, default=None, blank=True, null=True)

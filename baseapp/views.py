@@ -35,6 +35,9 @@ from datetime import datetime, timedelta
 from ipware import get_client_ip
 from geoip import geolite2
 
+from datetime import datetime
+import dateutil.parser
+
 
 def home(request):
     if request.method == "GET":
@@ -73,9 +76,9 @@ def home(request):
         all_country_item = CountryItem.objects.filter(date_flag=date_flag).order_by('-confirmed', '-death',
                                                                                     'country_code__english')
 
-        cnn_item = CnnItem.objects.all().order_by('-created')[:5]
-
+        cnn_item = BBCItem.objects.all().order_by('-created')[:5]
         youtube_item = YoutubeItem.objects.all().order_by('-created')[:5]
+
 
         if country_code is not None:
             try:
@@ -101,7 +104,7 @@ YOUTUBE_DATA_API_KEY = 'AIzaSyDAOuwrMiVMDaRxcKBGATckFTjrYlgHSGA'  # youtube api 
 
 
 @csrf_exempt
-def update_cnn(request):
+def update_bbc(request):
     if request.method == "POST":
 
         payload = json.loads(
@@ -113,6 +116,10 @@ def update_cnn(request):
 
         url = "http://feeds.bbci.co.uk/news/rss.xml"  # Getting URL
         feed = feedparser.parse(url)  # Parsing XML data
+
+        ids = BBCItem.objects.order_by("-pk").values_list("pk", flat=True)[:20]
+        BBCItem.objects.exclude(pk__in=list(ids)).delete()
+
         try:
             with transaction.atomic():
 
@@ -120,12 +127,17 @@ def update_cnn(request):
                     if 'Corona' in str(item["title"]):
 
                         a = str(item["description"])[:str(item["description"]).find("<img src=")]
-                        cnn_item_created, created = CnnItem.objects.get_or_create(url=item['link'])
+                        cnn_item_created, created = BBCItem.objects.get_or_create(url=item['link'])
                         if created:
                             cnn_item_created.title = item["title"]
                             cnn_item_created.published_date = item["published"]
                             cnn_item_created.content = a
                             cnn_item_created.url = item['link']
+
+                            django_date = datetime.\
+                                strptime(item["published"], '%a, %d %b %Y %H:%M:%S %Z').\
+                                strftime('%Y-%m-%dT%H:%M:%S.000Z')
+                            cnn_item_created.published_date_raw = dateutil.parser.parse(django_date)
                             cnn_item_created.save()
 
         except Exception as e:
@@ -221,6 +233,9 @@ def update_youtube(request):
         # print(request.POST)
         # print(request.POST.dict())
         # print(str(request.POST.dict()))
+
+        ids = YoutubeItem.objects.order_by("-pk").values_list("pk", flat=True)[:20]
+        YoutubeItem.objects.exclude(pk__in=list(ids)).delete()
 
         payload = json.loads(
             request.body.decode('utf-8'))

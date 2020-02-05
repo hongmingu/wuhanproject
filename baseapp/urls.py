@@ -14,7 +14,7 @@ urlpatterns = [
             name='sitemaps'),
     re_path(r'^$', views.home, name='home'),
     re_path(r'^update_youtube/$', views.update_youtube, name="update_youtube"),
-    re_path(r'^update_cnn/$', views.update_cnn, name="update_cnn"),
+    re_path(r'^update_bbc/$', views.update_bbc, name="update_bbc"),
     re_path(r'^update_country/$', views.update_country, name="update_country"),
 ]
 

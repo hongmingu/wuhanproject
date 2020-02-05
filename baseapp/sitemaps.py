@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.urls import reverse
 
 class HomeSitemap(Sitemap):
-    changefreq = "weekly"
+    changefreq = "hourly"
     priority = 1.0
     protocol = "https"
 
