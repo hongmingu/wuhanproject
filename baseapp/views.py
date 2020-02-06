@@ -79,7 +79,6 @@ def home(request):
         cnn_item = BBCItem.objects.all().order_by('-created')[:5]
         youtube_item = YoutubeItem.objects.all().order_by('-created')[:5]
 
-
         if country_code is not None:
             try:
                 country_item = CountryItem.objects.get(country_code=country_code, date_flag=date_flag)
