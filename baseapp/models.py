@@ -4,7 +4,6 @@ from django.db import models
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
-from ckeditor.fields import RichTextField
 
 
 # Create your models here.
@@ -90,15 +89,3 @@ class BBCItem(models.Model):
 
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
-
-
-class Post(models.Model):
-    text = RichTextField(default=None, blank=None, null=True, max_length=2000)
-    nickname = models.CharField(default=None, blank=None, null=True, max_length=255)
-
-    updated = models.DateTimeField(auto_now=True)
-    created = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return "%s" % self.when
-
