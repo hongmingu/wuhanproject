@@ -38,6 +38,8 @@ from geoip import geolite2
 from datetime import datetime
 import dateutil.parser
 
+from forum.models import BlogPost
+
 
 def home(request):
     if request.method == "GET":
@@ -75,6 +77,8 @@ def home(request):
         world_item = None
         all_country_item = CountryItem.objects.filter(date_flag=date_flag).order_by('-confirmed', '-death',
                                                                                     'country_code__english')
+        all_country_item_chart = CountryItem.objects.filter(date_flag=date_flag).order_by('-confirmed', '-death',
+                                                                                          'country_code__english')
 
         cnn_item = BBCItem.objects.all().order_by('-created')[:5]
         youtube_item = YoutubeItem.objects.all().order_by('-created')[:5]
@@ -90,13 +94,74 @@ def home(request):
         except Exception as e:
             print(e)
 
+        posts = BlogPost.objects.order_by('-date_published').all()[:1]
+
         return render(request, 'baseapp/home.html', {'country_item': country_item,
                                                      'all_country_item': all_country_item,
+                                                     'all_country_item_chart': all_country_item_chart,
                                                      'world_item': world_item,
                                                      'cnn_item': cnn_item,
-                                                     'youtube_item': youtube_item})
+                                                     'youtube_item': youtube_item,
+                                                     'posts': posts})
     else:
         return render(request, 'baseapp/home.html')
+
+
+def news(request):
+    if request.method == "GET":
+
+        cnn_item = BBCItem.objects.all().order_by('-created')[:50]
+
+        return render(request, 'baseapp/news.html', {'cnn_item': cnn_item,})
+    else:
+        return render(request, 'baseapp/news.html')
+
+def chart(request):
+    if request.method == "GET":
+        client_ip, is_routable = get_client_ip(request)
+        country_code = None
+        if client_ip is None:
+            pass
+        # Unable to get the client's IP address
+        else:
+            # print(get_client_ip(request))
+            match = geolite2.lookup(client_ip)
+            if match is not None:
+                get_code = match.country
+                try:
+                    country_code = CountryCode.objects.get(code=get_code)
+                except Exception as e:
+                    print(e)
+                    pass
+
+        date_flag = DateFlag.objects.last()
+        country_item = None
+        world_item = None
+        all_country_item = CountryItem.objects.filter(date_flag=date_flag).order_by('-confirmed', '-death',
+                                                                                    'country_code__english').all()
+
+        cnn_item = BBCItem.objects.all().order_by('-created')[:5]
+
+        if country_code is not None:
+            try:
+                country_item = CountryItem.objects.get(country_code=country_code, date_flag=date_flag)
+            except Exception as e:
+                print(e)
+
+        try:
+            world_item = WorldItem.objects.get(date_flag=date_flag)
+        except Exception as e:
+            print(e)
+
+        posts = BlogPost.objects.order_by('-date_published').all()[:3]
+
+        return render(request, 'baseapp/chart.html', {'country_item': country_item,
+                                                      'all_country_item': all_country_item,
+                                                      'world_item': world_item,
+                                                      'cnn_item': cnn_item,
+                                                      'posts': posts})
+    else:
+        return render(request, 'baseapp/chart.html')
 
 
 YOUTUBE_DATA_API_KEY = 'AIzaSyDAOuwrMiVMDaRxcKBGATckFTjrYlgHSGA'  # youtube api key. 민구야 발급 받는 게 좋을 듯?
@@ -116,7 +181,7 @@ def update_bbc(request):
         url = "http://feeds.bbci.co.uk/news/rss.xml"  # Getting URL
         feed = feedparser.parse(url)  # Parsing XML data
 
-        ids = BBCItem.objects.order_by("-pk").values_list("pk", flat=True)[:20]
+        ids = BBCItem.objects.order_by("-pk").values_list("pk", flat=True)[:100]
         BBCItem.objects.exclude(pk__in=list(ids)).delete()
 
         try:
@@ -133,8 +198,8 @@ def update_bbc(request):
                             cnn_item_created.content = a
                             cnn_item_created.url = item['link']
 
-                            django_date = datetime.\
-                                strptime(item["published"], '%a, %d %b %Y %H:%M:%S %Z').\
+                            django_date = datetime. \
+                                strptime(item["published"], '%a, %d %b %Y %H:%M:%S %Z'). \
                                 strftime('%Y-%m-%dT%H:%M:%S.000Z')
                             cnn_item_created.published_date_raw = dateutil.parser.parse(django_date)
                             cnn_item_created.save()
@@ -321,6 +386,32 @@ def update_youtube(request):
     else:
         return render(request, 'baseapp/home.html')
 
+
+def add_post(request):
+    if request.method == "GET":
+        client_ip, is_routable = get_client_ip(request)
+        country_code = None
+        if client_ip is None:
+            pass
+        # Unable to get the client's IP address
+        else:
+            # print(get_client_ip(request))
+            match = geolite2.lookup(client_ip)
+            if match is not None:
+                get_code = match.country
+                try:
+                    country_code = CountryCode.objects.get(code=get_code)
+                except Exception as e:
+                    print(e)
+                    pass
+
+        return render(request, 'baseapp/home.html', {'country_item': country_item,
+                                                     'all_country_item': all_country_item,
+                                                     'world_item': world_item,
+                                                     'cnn_item': cnn_item,
+                                                     'youtube_item': youtube_item})
+    else:
+        return render(request, 'baseapp/home.html')
 
 
 def crawl_on_linux(request):
