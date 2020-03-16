@@ -362,6 +362,7 @@ elif settings_json['debug']['mode'] == 'admin':
     # Application definition
 
     INSTALLED_APPS = [
+        'django.contrib.admin',
         'django.contrib.auth',
         'django.contrib.contenttypes',
         'django.contrib.sessions',
@@ -393,6 +394,8 @@ elif settings_json['debug']['mode'] == 'admin':
         'django.contrib.auth.middleware.AuthenticationMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        # django debug-toolbar
+        'debug_toolbar.middleware.DebugToolbarMiddleware',
     ]
 
     ROOT_URLCONF = 'wuhanproject.urls'
