@@ -38,7 +38,7 @@ from geoip import geolite2
 from datetime import datetime
 import dateutil.parser
 
-from forum.models import BlogPost
+from forum.models import Post
 
 
 def home(request):
@@ -94,7 +94,7 @@ def home(request):
         except Exception as e:
             print(e)
 
-        posts = BlogPost.objects.order_by('-date_published').all()[:1]
+        posts = Post.objects.filter(featured=True).order_by('-date_published').all()[:1]
 
         return render(request, 'baseapp/home.html', {'country_item': country_item,
                                                      'all_country_item': all_country_item,
@@ -153,7 +153,7 @@ def chart(request):
         except Exception as e:
             print(e)
 
-        posts = BlogPost.objects.order_by('-date_published').all()[:3]
+        posts = Post.objects.filter().order_by('-date_published').all()[:1]
 
         return render(request, 'baseapp/chart.html', {'country_item': country_item,
                                                       'all_country_item': all_country_item,

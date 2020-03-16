@@ -35,7 +35,7 @@ class PostDetailSitemap(Sitemap):
     protocol = "https"
 
     def items(self):
-        return BlogPost.objects.all().order_by('-date_published')
+        return Post.objects.all().order_by('-date_published')
 
     def lastmod(self, obj):
         return obj.date_updated

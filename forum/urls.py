@@ -6,6 +6,7 @@ from .views import (
     delete_blog_view,
     delete_comment_view,
     post_list_view,
+    up_vote_view,
 )
 
 app_name = 'forum'
@@ -19,4 +20,8 @@ urlpatterns = [
 
     # comments
     path('<id>/<title>/comment/<cid>/delete', delete_comment_view, name='comment_delete'),
+
+    # vote
+    path('up/<id>/<title>', up_vote_view, name='up_vote'),
+
 ]

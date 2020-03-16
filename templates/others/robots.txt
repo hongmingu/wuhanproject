@@ -3,4 +3,4 @@ Disallow: /a/admin/
 Disallow: /b/admin/
 Allow: /
 
-Sitemap: https://www.galabill.com/a/sitemap.xml
+Sitemap: https://www.coronagram.com/a/sitemap.xml

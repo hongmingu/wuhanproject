@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 
 from .forms import RegistrationForm, AccountAuthenticationForm, AccountUpdateForm
-from forum.models import BlogPost
+from forum.models import Post
 
 
 def registration_view(request):
@@ -83,7 +83,7 @@ def account_view(request):
 
     context['account_form'] = form
 
-    blog_posts = BlogPost.objects.filter(author=request.user)
+    blog_posts = Post.objects.filter(author=request.user)
     context['blog_posts'] = blog_posts
 
     return render(request, "account.html", context)

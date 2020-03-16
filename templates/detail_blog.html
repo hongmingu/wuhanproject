@@ -16,8 +16,26 @@
         p {
             margin: 0
         }
-    </style>
 
+        .voted {
+            background: #dffcc8;
+            solid-color: #3b5998;
+            border-color: #1b6d85;
+            border-radius: 4px;
+            color: #8c8c8c;
+        }
+
+        .unvoted {
+            background: #7ccbfc;
+            border-color: #1b6d85;
+            solid-color: #3b5998;
+            border-radius: 4px;
+            color: #ffffff;
+        }
+    </style>
+    <div class="d-none" id="id">{{ blog_post.id }}</div>
+    <div class="d-none" id="title">{{ blog_post.title }}</div>
+    <div class="d-none" id="up">{{ blog_post.up_count }}</div>
     <div class="container">
         <div class="row">
 
@@ -35,6 +53,34 @@
                         </div>
 
                     {% endif %}
+                    {% if request.user.is_authenticated %}
+                        {% if vote %}
+                            <div class="container mt-4">
+                                <div class="row">
+                                    <div class="col-12 text-center" style=""><a
+                                            class="btn text-black 4 p-2 voted vote-btn"
+                                            href="">Voted</a> <span class="p-1" id="up_count">{{ blog_post.up_count }}</span></div>
+                                </div>
+                            </div>
+
+                        {% else %}
+                            <div class="container mt-4">
+                                <div class="row">
+                                    <div class="col-12 text-center" style=""><a
+                                            class="btn text-black 4 p-2 unvoted vote-btn"
+                                            href="">Up</a> <span class="p-1" id="up_count">{{ blog_post.up_count }}</span></div>
+                                </div>
+                            </div>
+
+                        {% endif %}
+
+                    {% endif %}
+                    <div class="container mt-4">
+                        <div class="row">
+                            <div class="col-12 text-center" style=""></div>
+                        </div>
+                    </div>
+
                     <div class="container mt-4">
                         <div class="row">
                             <div class="col-6 text-center" style=""><a class="btn text-white col-12"
@@ -100,7 +146,8 @@
                 {% endif %}
 
                 <div class="card-footer text-muted">
-                    {{ blog_post.date_updated|timesince }} ago by <span class="font-italic">{{ blog_post.author.username }}</span> views: {{ blog_post.view_count }}
+                    {{ blog_post.date_updated|timesince }} ago by <span
+                        class="font-italic">{{ blog_post.author.username }}</span> views: {{ blog_post.view_count }}
                 </div>
             </div>
         </div>

@@ -1,16 +1,16 @@
 from django import forms
-from forum.models import BlogPost, Comment
+from forum.models import Post, Comment
 
 
 class CreateBlogPostForm(forms.ModelForm):
     class Meta:
-        model = BlogPost
+        model = Post
         fields = ['title', 'body']
 
 
 class UpdateBlogPostForm(forms.ModelForm):
     class Meta:
-        model = BlogPost
+        model = Post
         fields = ['title', 'body']
 
     def save(self, commit=True):

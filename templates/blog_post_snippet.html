@@ -50,8 +50,8 @@
                         {% endif %}
                     </div>
                     <div class="card-footer text-muted">
-                        {{ blog_post.date_updated|timesince }} ago by <span
-                            class="font-italic">{{ blog_post.author }}</span> views: {{ blog_post.view_count }}
+                        {{ blog_post.date_published|timesince }} ago by <span
+                            class="font-italic">{{ blog_post.author }}</span> views: {{ blog_post.view_count }}  up: {{ blog_post.up_count }}
                     </div>
                 </div>
             </a>
