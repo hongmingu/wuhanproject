@@ -59,7 +59,8 @@
                                 <div class="row">
                                     <div class="col-12 text-center" style=""><a
                                             class="btn text-black 4 p-2 voted vote-btn"
-                                            href="">Voted</a> <span class="p-1" id="up_count">{{ blog_post.up_count }}</span></div>
+                                            href="">Voted</a> <span class="p-1"
+                                                                    id="up_count">{{ blog_post.up_count }}</span></div>
                                 </div>
                             </div>
 
@@ -68,12 +69,23 @@
                                 <div class="row">
                                     <div class="col-12 text-center" style=""><a
                                             class="btn text-black 4 p-2 unvoted vote-btn"
-                                            href="">Up</a> <span class="p-1" id="up_count">{{ blog_post.up_count }}</span></div>
+                                            href="">Up</a> <span class="p-1"
+                                                                 id="up_count">{{ blog_post.up_count }}</span></div>
                                 </div>
                             </div>
 
                         {% endif %}
 
+                    {% else %}
+                        <div class="container mt-4">
+                            <div class="row">
+                                <div class="col-12 text-center" style=""><a
+                                        class="btn btn-secondary text-black 4"
+                                        href="{% url 'account:login' %}">Login to Up</a> <span class="p-1"
+                                                                                               id="up_count">{{ blog_post.up_count }}</span>
+                                </div>
+                            </div>
+                        </div>
                     {% endif %}
                     <div class="container mt-4">
                         <div class="row">
@@ -152,7 +164,13 @@
             </div>
         </div>
     </div>
-
+    <div class="container pt-4">
+        <a href="{% url 'forum:post_list' %}">
+            <div class="row">
+                <button class="col-md-8 mx-auto text-center btn btn-primary p-2">Post List</button>
+            </div>
+        </a>
+    </div>
 
 
 {% endblock content %}

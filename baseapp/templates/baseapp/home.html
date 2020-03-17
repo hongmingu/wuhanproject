@@ -8,7 +8,10 @@
                 <div class="name">{{ item.country_code.english }}</div>
                 <div class="code">{{ item.country_code.code }}</div>
                 <div class="case">{{ item.confirmed }}</div>
+                <div class="death">{{ item.death }}</div>
                 <div class="recovered">{{ item.recovered }}</div>
+                <div class="death-rate">{{ item.death_rate }}</div>
+
             </div>
         {% endfor %}
     {% endif %}
