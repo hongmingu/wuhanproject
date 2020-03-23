@@ -41,10 +41,40 @@ class CountryItem(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "%s // %s" % (self.date_flag.when, self.country)
+        return "%s // %s" % (self.date_flag.when, self.country_code.english)
 
     class Meta:
         unique_together = ('date_flag', 'country_code',)
+
+
+class USAStateCode(models.Model):
+    code = models.CharField(default="code", blank=None, null=True, max_length=255, unique=True)
+    english = models.CharField(default="english", blank=None, null=True, max_length=255)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "%s // %s" % (self.code, self.english)
+
+
+# date_flag 어떻게 할지 결정.
+class USAStateItem(models.Model):
+    date_flag = models.ForeignKey(DateFlag, on_delete=models.DO_NOTHING, null=True, blank=True)
+    usa_state_code = models.ForeignKey(USAStateCode, on_delete=models.DO_NOTHING, null=True, blank=True)
+
+    confirmed = models.IntegerField(default=0, blank=None, null=True)
+    death = models.IntegerField(default=0, blank=None, null=True)
+    recovered = models.IntegerField(default=0, blank=None, null=True)
+    death_rate = models.DecimalField(default=0, blank=None, null=True, max_digits=9, decimal_places=2)
+
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "%s // %s" % (self.date_flag.when, self.usa_state_code.english)
+
+    class Meta:
+        unique_together = ('date_flag', 'usa_state_code',)
 
 
 class WorldItem(models.Model):

@@ -95,7 +95,24 @@ def home(request):
             print(e)
 
         posts = Post.objects.filter(featured=True).order_by('-date_published').all()[:1]
+        all_usa_item = USAStateItem.objects.filter(date_flag=date_flag).order_by('-confirmed', '-death',
+                                                                                 'usa_state_code__english')
 
+        if country_code is not None and country_code.code == "US":
+            all_usa_item = USAStateItem.objects.filter(date_flag=date_flag).order_by('-confirmed', '-death',
+                                                                                     'usa_state_code__english')
+
+            return render(request, 'baseapp/home_usa.html', {'country_item': country_item,
+                                                             'all_usa_item': all_usa_item,
+                                                             'all_country_item': all_country_item,
+                                                             'all_country_item_chart': all_country_item_chart,
+                                                             'world_item': world_item,
+                                                             'cnn_item': cnn_item,
+                                                             'posts': posts})
+
+
+        # us 일 경우 home 아이콘 배치를 어떻게할까
+        # dateflag 고려해서 데이터 받기.
         return render(request, 'baseapp/home.html', {'country_item': country_item,
                                                      'all_country_item': all_country_item,
                                                      'all_country_item_chart': all_country_item_chart,
@@ -112,9 +129,10 @@ def news(request):
 
         cnn_item = BBCItem.objects.all().order_by('-created')[:50]
 
-        return render(request, 'baseapp/news.html', {'cnn_item': cnn_item,})
+        return render(request, 'baseapp/news.html', {'cnn_item': cnn_item, })
     else:
         return render(request, 'baseapp/news.html')
+
 
 def chart(request):
     if request.method == "GET":
@@ -235,7 +253,8 @@ def update_country(request):
             return JsonResponse({"data": "token failed"}, safe=False)
 
         import pandas as pd
-        data = pd.DataFrame(payload)
+
+        data = pd.DataFrame(payload['world'])
 
         country = data['Country/Region'].to_list()  # 열 이름: Country/Region
         confirmed = data['Confirmed Cases'].to_list()  # 열 이름: Confirmed Cases
@@ -269,6 +288,106 @@ def update_country(request):
                                                                      death_rate=round(
                                                                          deaths[item] / confirmed[item] * 100,
                                                                          2))
+
+                world_item_create = WorldItem.objects.create(date_flag=date_flag_create,
+                                                             country_count=int(str(len(country))),
+                                                             confirmed=int(str(confirmed_count)),
+                                                             death=int(str(deaths_count)),
+                                                             recovered=int(str(recovered_count)),
+                                                             death_rate=round(deaths_count / confirmed_count * 100, 2))
+
+                data_usa = pd.DataFrame(payload['USA'])
+                country_usa = data_usa['USAState'].to_list()  # 열 이름: Country/Region
+                confirmed_usa = data_usa['Confirmed Cases'].to_list()  # 열 이름: Confirmed Cases
+                deaths_usa = data_usa['Deaths'].to_list()  # 열 이름: Deaths
+                recovered_usa = data_usa['Recovered'].to_list()  # 열 이름: Recovered
+                iso_usa = data_usa['short'].to_list()  # 열 이름: ISO
+                print(country_usa)
+                print(iso_usa)
+                confirmed_count_usa = 0
+                deaths_count_usa = 0
+                recovered_count_usa = 0
+
+                etc_index = 0
+                for item in range(len(country_usa)):
+                    confirmed_count_usa = confirmed_count_usa + int(confirmed_usa[item])
+                    deaths_count_usa = deaths_count_usa + int(deaths_usa[item])
+                    recovered_count_usa = recovered_count_usa + int(recovered_usa[item])
+                    short_uda = iso_usa[item]
+                    print(short_uda)
+
+                    if str(iso_usa[item]) == "etc":
+                        etc_index += 1
+                        short_uda = short_uda + str(etc_index)
+                        print("modi: " + short_uda)
+                    country_code_usa, created = USAStateCode.objects.get_or_create(code=short_uda)
+                    country_code_usa.english = country_usa[item]
+                    country_code_usa.save()
+
+                    usa_item_create = USAStateItem.objects.create(date_flag=date_flag_create,
+                                                                  usa_state_code=country_code_usa,
+                                                                  confirmed=int(confirmed_usa[item]),
+                                                                  death=int(deaths_usa[item]),
+                                                                  recovered=int(recovered_usa[item]),
+                                                                  death_rate=round(
+                                                                      deaths_usa[item] / confirmed_usa[item] * 100,
+                                                                      2))
+
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({"data": "failed"}, safe=False)
+
+        return JsonResponse({"data": "success"}, safe=False)
+    else:
+        return render(request, 'baseapp/home.html')
+
+
+@csrf_exempt
+def update_us(request):
+    if request.method == "POST":
+
+        payload = json.loads(
+            request.body.decode('utf-8'))
+        token = payload["token"]
+        if not token == settings.OXIBUG_TOKEN:
+            return JsonResponse({"data": "token failed"}, safe=False)
+
+        import pandas as pd
+        data = pd.DataFrame(payload)
+
+        country = data['USAState'].to_list()  # 열 이름: Country/Region
+        confirmed = data['Confirmed Cases'].to_list()  # 열 이름: Confirmed Cases
+        deaths = data['Deaths'].to_list()  # 열 이름: Deaths
+        recovered = data['Recovered'].to_list()  # 열 이름: Recovered
+        iso = data['ISO'].to_list()  # 열 이름: ISO
+
+        try:
+            with transaction.atomic():
+
+                date_flag_create = USADateFlag.objects.create()
+
+                confirmed_count = 0
+                deaths_count = 0
+                recovered_count = 0
+
+                for item in range(len(country)):
+                    confirmed_count = confirmed_count + int(confirmed[item])
+                    deaths_count = deaths_count + int(deaths[item])
+                    recovered_count = recovered_count + int(recovered[item])
+
+                    code, created = USAStateCode.objects.get_or_create(code=iso[item])
+                    code.english = country[item]
+                    code.save()
+
+                    country_item_create = USAStateItem.objects.create(date_flag=date_flag_create,
+                                                                      country_code=code,
+                                                                      confirmed=int(confirmed[item]),
+                                                                      death=int(deaths[item]),
+                                                                      recovered=int(recovered[item]),
+                                                                      death_rate=round(
+                                                                          deaths[item] / confirmed[item] * 100,
+                                                                          2))
 
                 world_item_create = WorldItem.objects.create(date_flag=date_flag_create,
                                                              country_count=int(str(len(country))),
