@@ -43,7 +43,7 @@
             <div class="col-12 col-md-8 offset-md-2 card mx-auto">
                 <div class="card-body mt-2 mb-2">
                     <h4 class="card-title">{{ blog_post.title }}</h4>
-                    <p class="card-text">{{ blog_post.body|safe }}</p>
+                    <p class="card-text">{{ blog_post.body|safe|urlize }}</p>
                     {% if blog_post.author == request.user %}
                         <div class="text-right">
                             <a href="{% url 'forum:edit' id=blog_post.id title=blog_post.title %}"
