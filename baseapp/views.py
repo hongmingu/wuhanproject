@@ -123,6 +123,15 @@ def home(request):
     else:
         return render(request, 'baseapp/home.html')
 
+def home2(request):
+    if request.method == "GET":
+
+        return render(request, 'baseapp/home_c.html')
+
+        # us 일 경우 home 아이콘 배치를 어떻게할까
+        # dateflag 고려해서 데이터 받기.
+    else:
+        return render(request, 'baseapp/home_c.html')
 
 def news(request):
     if request.method == "GET":
@@ -332,7 +341,6 @@ def update_country(request):
                                                                   death_rate=round(
                                                                       deaths_usa[item] / confirmed_usa[item] * 100,
                                                                       2))
-
 
         except Exception as e:
             print(e)

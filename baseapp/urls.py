@@ -13,13 +13,14 @@ urlpatterns = [
     path('a/sitemap.xml', sitemap_views.index, {'sitemaps': sitemaps, 'sitemap_url_name': 'baseapp:sitemaps'}),
     path('a/sitemap-<section>.xml', sitemap_views.sitemap, {'sitemaps': sitemaps},
             name='sitemaps'),
-    re_path(r'^$', views.home, name='home'),
-    re_path(r'^chart/$', views.chart, name='chart'),
-    re_path(r'^news/$', views.news, name='news'),
-    re_path(r'^add_post/$', views.add_post, name='add_post'),
-    re_path(r'^update_youtube/$', views.update_youtube, name="update_youtube"),
-    re_path(r'^update_bbc/$', views.update_bbc, name="update_bbc"),
-    re_path(r'^update_country/$', views.update_country, name="update_country"),
+    # re_path(r'^$', views.home, name='home'),
+    re_path(r'^$', views.home2, name='home'),
+    # re_path(r'^chart/$', views.chart, name='chart'),
+    # re_path(r'^news/$', views.news, name='news'),
+    # re_path(r'^add_post/$', views.add_post, name='add_post'),
+    # re_path(r'^update_youtube/$', views.update_youtube, name="update_youtube"),
+    # re_path(r'^update_bbc/$', views.update_bbc, name="update_bbc"),
+    # re_path(r'^update_country/$', views.update_country, name="update_country"),
 ]
 
 
